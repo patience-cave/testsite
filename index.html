@@ -1,76 +1,100 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Login Demo!</title>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js"></script>
-</head>
-<body>
-  <h1>Login / Signup</h1>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Auth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js"></script>
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white shadow-2xl rounded-2xl p-8 max-w-sm w-full">
+      <h2 class="text-2xl font-semibold text-center mb-6" id="form-title">Sign Up</h2>
 
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
+      <div class="space-y-4">
+        <input
+          type="email"
+          id="email"
+          placeholder="Email"
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          id="action-button"
+          onclick="handleAuthAction()"
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
+        >
+          Sign Up
+        </button>
 
-  <button onclick="signUp()">Sign Up</button>
-  <button onclick="logIn()">Log In</button>
-  <button onclick="logOut()">Log Out</button>
+        <p class="text-center text-sm text-gray-600">
+          <span id="toggle-text">Already have an account?</span>
+          <button class="text-blue-500 hover:underline" onclick="toggleMode()">Log In</button>
+        </p>
+        <p id="message" class="text-center text-sm text-red-500 mt-2"></p>
+        <button
+          onclick="logOut()"
+          class="w-full mt-4 text-sm text-gray-500 hover:underline"
+        >
+          Log Out
+        </button>
+      </div>
+    </div>
 
-  <p id="message"></p>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAummuuvOY6LGBh8fskhOtJPWU1pRw1IVI",
+        authDomain: "test-5a0e4.firebaseapp.com",
+        projectId: "test-5a0e4",
+        storageBucket: "test-5a0e4.appspot.com",
+        messagingSenderId: "636499451084",
+        appId: "1:636499451084:web:ca9e86d84756657bb9b669",
+      };
 
-  <script>
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "firebase/app";
-    import { getAnalytics } from "firebase/analytics";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
-    
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-      apiKey: "AIzaSyAummuuvOY6LGBh8fskhOtJPWU1pRw1IVI",
-      authDomain: "test-5a0e4.firebaseapp.com",
-      projectId: "test-5a0e4",
-      storageBucket: "test-5a0e4.firebasestorage.app",
-      messagingSenderId: "636499451084",
-      appId: "1:636499451084:web:ca9e86d84756657bb9b669",
-      measurementId: "G-M9C1VZNLC3"
-    };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+      let isSignUp = true;
 
-    function signUp() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      function toggleMode() {
+        isSignUp = !isSignUp;
+        document.getElementById("form-title").innerText = isSignUp ? "Sign Up" : "Log In";
+        document.getElementById("action-button").innerText = isSignUp ? "Sign Up" : "Log In";
+        document.getElementById("toggle-text").innerText = isSignUp
+          ? "Already have an account?"
+          : "Don't have an account?";
+        document.getElementById("message").innerText = "";
+      }
 
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(userCredential => {
-          document.getElementById("message").innerText = "Signed up!";
-        })
-        .catch(error => {
-          document.getElementById("message").innerText = error.message;
+      function handleAuthAction() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const msg = document.getElementById("message");
+
+        if (isSignUp) {
+          auth
+            .createUserWithEmailAndPassword(email, password)
+            .then(() => (msg.innerText = "🎉 Signed up successfully!"))
+            .catch(error => (msg.innerText = error.message));
+        } else {
+          auth
+            .signInWithEmailAndPassword(email, password)
+            .then(() => (msg.innerText = "✅ Logged in!"))
+            .catch(error => (msg.innerText = error.message));
+        }
+      }
+
+      function logOut() {
+        auth.signOut().then(() => {
+          document.getElementById("message").innerText = "👋 Logged out!";
         });
-    }
-
-    function logIn() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then(userCredential => {
-          document.getElementById("message").innerText = "Logged in!";
-        })
-        .catch(error => {
-          document.getElementById("message").innerText = error.message;
-        });
-    }
-
-    function logOut() {
-      auth.signOut().then(() => {
-        document.getElementById("message").innerText = "Logged out!";
-      });
-    }
-  </script>
-</body>
+      }
+    </script>
+  </body>
 </html>
