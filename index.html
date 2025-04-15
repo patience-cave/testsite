@@ -3,59 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modern Auth</title>
+    <title>Email Code Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   </head>
   <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white shadow-2xl rounded-2xl p-8 max-w-sm w-full">
-      <h2 class="text-2xl font-semibold text-center mb-6" id="form-title">Sign Up</h2>
+    <div class="bg-white shadow-2xl rounded-2xl p-8 max-w-sm w-full space-y-4">
+      <h2 class="text-2xl font-semibold text-center">Login with Email</h2>
 
-      <div class="space-y-4">
-        <input
-          type="email"
-          id="email"
-          placeholder="Email"
-          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <input
-          type="password"
-          id="password"
-          placeholder="Password"
-          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <button
-          id="action-button"
-          onclick="handleAuthAction()"
-          class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
-        >
-          Sign Up
-        </button>
+      <input
+        type="email"
+        id="email"
+        placeholder="Enter your email"
+        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
+      <button
+        id="send-code"
+        onclick="sendLoginLink()"
+        class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
+      >
+        Send Login Code
+      </button>
 
-        <p class="text-center text-sm text-gray-600">
-          <span id="toggle-text">Already have an account?</span>
-          <button class="text-blue-500 hover:underline" onclick="toggleMode()">Log In</button>
-        </p>
-        <p id="message" class="text-center text-sm text-red-500 mt-2"></p>
-        <button
-          onclick="logOut()"
-          class="w-full mt-4 text-sm text-gray-500 hover:underline"
-        >
-          Log Out
-        </button>
-      </div>
+      <input
+        type="text"
+        id="code"
+        placeholder="Enter code from email"
+        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
+      <button
+        id="verify-code"
+        onclick="verifyCode()"
+        class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition"
+      >
+        Verify & Login
+      </button>
+
+      <div class="text-center my-2">— or —</div>
+
+      <button
+        onclick="signInWithGoogle()"
+        class="w-full bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 py-2 rounded-lg transition flex items-center justify-center space-x-2"
+      >
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5" />
+        <span>Sign in with Google</span>
+      </button>
+
+      <p id="message" class="text-center text-sm text-red-500 mt-2"></p>
     </div>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
       import {
         getAuth,
-        createUserWithEmailAndPassword,
-        signInWithEmailAndPassword,
-        signOut,
+        isSignInWithEmailLink,
+        sendSignInLinkToEmail,
+        signInWithEmailLink,
+        GoogleAuthProvider,
+        signInWithPopup
       } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    
+
       const firebaseConfig = {
         apiKey: "AIzaSyAummuuvOY6LGBh8fskhOtJPWU1pRw1IVI",
         authDomain: "test-5a0e4.firebaseapp.com",
@@ -64,45 +72,49 @@
         messagingSenderId: "636499451084",
         appId: "1:636499451084:web:ca9e86d84756657bb9b669",
       };
-    
+
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
-    
-      let isSignUp = true;
-    
-      window.toggleMode = function () {
-        isSignUp = !isSignUp;
-        document.getElementById("form-title").innerText = isSignUp ? "Sign Up" : "Log In";
-        document.getElementById("action-button").innerText = isSignUp ? "Sign Up" : "Log In";
-        document.getElementById("toggle-text").innerText = isSignUp
-          ? "Already have an account?"
-          : "Don't have an account?";
-        document.getElementById("message").innerText = "";
-      };
-    
-      window.handleAuthAction = function () {
+      const msg = document.getElementById("message");
+
+      window.sendLoginLink = async function () {
         const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const msg = document.getElementById("message");
-    
-        if (isSignUp) {
-          createUserWithEmailAndPassword(auth, email, password)
-            .then(() => (msg.innerText = "🎉 Signed up successfully!"))
-            .catch((error) => (msg.innerText = error.message));
-        } else {
-          signInWithEmailAndPassword(auth, email, password)
-            .then(() => (msg.innerText = "✅ Logged in!"))
-            .catch((error) => (msg.innerText = error.message));
+        const actionCodeSettings = {
+          url: window.location.href,
+          handleCodeInApp: true,
+        };
+
+        try {
+          await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+          window.localStorage.setItem("emailForSignIn", email);
+          msg.innerText = "✅ Login code sent to your email.";
+        } catch (error) {
+          msg.innerText = error.message;
         }
       };
-    
-      window.logOut = function () {
-        signOut(auth).then(() => {
-          document.getElementById("message").innerText = "👋 Logged out!";
-        });
+
+      window.verifyCode = async function () {
+        const email = window.localStorage.getItem("emailForSignIn");
+        const code = document.getElementById("code").value;
+        const url = `${window.location.origin}?${code}`;
+
+        try {
+          await signInWithEmailLink(auth, email, url);
+          msg.innerText = "🎉 Logged in!";
+        } catch (error) {
+          msg.innerText = error.message;
+        }
+      };
+
+      window.signInWithGoogle = async function () {
+        const provider = new GoogleAuthProvider();
+        try {
+          await signInWithPopup(auth, provider);
+          msg.innerText = "🎉 Signed in with Google!";
+        } catch (error) {
+          msg.innerText = error.message;
+        }
       };
     </script>
-    
-  
   </body>
 </html>
