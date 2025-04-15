@@ -45,6 +45,8 @@
       import {
         getAuth,
         sendSignInLinkToEmail,
+        isSignInWithEmailLink,
+        signInWithEmailLink,
         GoogleAuthProvider,
         signInWithPopup,
       } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
@@ -79,6 +81,7 @@
           msg.innerText = "Oops! An error occurred.";
           msg.classList.remove("text-gray-600");
           msg.classList.add("text-red-500");
+          console.error(error);
         }
       };
 
@@ -93,8 +96,33 @@
           msg.innerText = "Oops! An error occurred.";
           msg.classList.remove("text-gray-600");
           msg.classList.add("text-red-500");
+          console.error(error);
         }
       };
+
+      // Handle email link sign-in if user is returning via email
+      window.addEventListener("DOMContentLoaded", async () => {
+        if (isSignInWithEmailLink(auth, window.location.href)) {
+          let email = window.localStorage.getItem("emailForSignIn");
+          if (!email) {
+            email = window.prompt("Please provide your email for confirmation");
+          }
+
+          try {
+            const result = await signInWithEmailLink(auth, email, window.location.href);
+            window.localStorage.removeItem("emailForSignIn");
+            msg.innerText = `✅ Signed in as ${result.user.email}`;
+            msg.classList.remove("text-red-500");
+            msg.classList.add("text-gray-600");
+            console.log("Signed in user:", result.user);
+          } catch (error) {
+            msg.innerText = "Link is invalid or expired.";
+            msg.classList.remove("text-gray-600");
+            msg.classList.add("text-red-500");
+            console.error(error);
+          }
+        }
+      });
     </script>
   </body>
 </html>
