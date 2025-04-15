@@ -93,7 +93,7 @@
           msg.classList.remove("text-red-500");
           msg.classList.add("text-gray-600");
         } catch (error) {
-          msg.innerText = msg.innerText //"Oops! An error occurred.";
+          msg.innerText = error.message //"Oops! An error occurred.";
           msg.classList.remove("text-gray-600");
           msg.classList.add("text-red-500");
           console.error(error);
