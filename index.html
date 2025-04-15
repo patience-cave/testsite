@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Email Code Login</title>
+    <title>Email Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
@@ -19,22 +19,12 @@
         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
-      <input
-        type="text"
-        id="code"
-        inputmode="numeric"
-        pattern="[0-9]{6}"
-        maxlength="6"
-        placeholder="Enter 6-digit code"
-        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 hidden"
-      />
-
       <button
-        id="action-button"
-        onclick="handleAction()"
+        id="send-button"
+        onclick="sendLoginLink()"
         class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
       >
-        Send Login Code
+        Send Login Link
       </button>
 
       <div class="text-center my-2">— or —</div>
@@ -47,18 +37,16 @@
         <span>Sign in with Google</span>
       </button>
 
-      <p id="message" class="text-center text-sm text-red-500 mt-2"></p>
+      <p id="message" class="text-center text-sm text-gray-600 mt-2"></p>
     </div>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
       import {
         getAuth,
-        isSignInWithEmailLink,
         sendSignInLinkToEmail,
-        signInWithEmailLink,
         GoogleAuthProvider,
-        signInWithPopup
+        signInWithPopup,
       } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
       const firebaseConfig = {
@@ -74,47 +62,23 @@
       const auth = getAuth(app);
       const msg = document.getElementById("message");
 
-      let step = "email"; // or "code"
+      window.sendLoginLink = async function () {
+        const email = document.getElementById("email").value;
+        const actionCodeSettings = {
+          url: window.location.href,
+          handleCodeInApp: true,
+        };
 
-      window.handleAction = async function () {
-        if (step === "email") {
-          const email = document.getElementById("email").value;
-          const actionCodeSettings = {
-            url: window.location.href,
-            handleCodeInApp: true,
-          };
-
-          try {
-            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-            window.localStorage.setItem("emailForSignIn", email);
-            msg.innerText = "✅ Login link sent! Enter the 6-digit code.";
-            step = "code";
-
-            // UI changes
-            document.getElementById("email").classList.add("hidden");
-            document.getElementById("code").classList.remove("hidden");
-
-            const btn = document.getElementById("action-button");
-            btn.innerText = "Verify & Login";
-            btn.classList.remove("bg-blue-500", "hover:bg-blue-600");
-            btn.classList.add("bg-green-500", "hover:bg-green-600");
-
-          } catch (error) {
-            msg.innerText = error.message;
-          }
-
-        } else if (step === "code") {
-          const email = localStorage.getItem("emailForSignIn");
-          const codeInput = document.getElementById("code").value.trim();
-
-          const fakeLink = `${window.location.origin}?code=${codeInput}`; // simulate
-
-          try {
-            await signInWithEmailLink(auth, email, fakeLink); // assumes full link
-            msg.innerText = "🎉 Logged in successfully!";
-          } catch (error) {
-            msg.innerText = error.message;
-          }
+        try {
+          await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+          window.localStorage.setItem("emailForSignIn", email);
+          msg.innerText = "📬 Please check your email!";
+          msg.classList.remove("text-red-500");
+          msg.classList.add("text-gray-600");
+        } catch (error) {
+          msg.innerText = "Oops! An error occurred.";
+          msg.classList.remove("text-gray-600");
+          msg.classList.add("text-red-500");
         }
       };
 
@@ -123,8 +87,12 @@
         try {
           await signInWithPopup(auth, provider);
           msg.innerText = "🎉 Signed in with Google!";
+          msg.classList.remove("text-red-500");
+          msg.classList.add("text-gray-600");
         } catch (error) {
-          msg.innerText = error.message;
+          msg.innerText = "Oops! An error occurred.";
+          msg.classList.remove("text-gray-600");
+          msg.classList.add("text-red-500");
         }
       };
     </script>
