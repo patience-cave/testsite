@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modern Auth</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   </head>
   <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="bg-white shadow-2xl rounded-2xl p-8 max-w-sm w-full">
@@ -47,7 +47,15 @@
       </div>
     </div>
 
-    <script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+      import {
+        getAuth,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    
       const firebaseConfig = {
         apiKey: "AIzaSyAummuuvOY6LGBh8fskhOtJPWU1pRw1IVI",
         authDomain: "test-5a0e4.firebaseapp.com",
@@ -56,13 +64,13 @@
         messagingSenderId: "636499451084",
         appId: "1:636499451084:web:ca9e86d84756657bb9b669",
       };
-
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-
+    
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+    
       let isSignUp = true;
-
-      function toggleMode() {
+    
+      window.toggleMode = function () {
         isSignUp = !isSignUp;
         document.getElementById("form-title").innerText = isSignUp ? "Sign Up" : "Log In";
         document.getElementById("action-button").innerText = isSignUp ? "Sign Up" : "Log In";
@@ -70,31 +78,31 @@
           ? "Already have an account?"
           : "Don't have an account?";
         document.getElementById("message").innerText = "";
-      }
-
-      function handleAuthAction() {
+      };
+    
+      window.handleAuthAction = function () {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
         const msg = document.getElementById("message");
-
+    
         if (isSignUp) {
-          auth
-            .createUserWithEmailAndPassword(email, password)
+          createUserWithEmailAndPassword(auth, email, password)
             .then(() => (msg.innerText = "🎉 Signed up successfully!"))
-            .catch(error => (msg.innerText = error.message));
+            .catch((error) => (msg.innerText = error.message));
         } else {
-          auth
-            .signInWithEmailAndPassword(email, password)
+          signInWithEmailAndPassword(auth, email, password)
             .then(() => (msg.innerText = "✅ Logged in!"))
-            .catch(error => (msg.innerText = error.message));
+            .catch((error) => (msg.innerText = error.message));
         }
-      }
-
-      function logOut() {
-        auth.signOut().then(() => {
+      };
+    
+      window.logOut = function () {
+        signOut(auth).then(() => {
           document.getElementById("message").innerText = "👋 Logged out!";
         });
-      }
+      };
     </script>
+    
+  
   </body>
 </html>
