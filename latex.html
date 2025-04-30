@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>LaTeX Response Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f9fafb;
+      gap: 1.5rem;
+    }
+    #wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      width: min(90%, 600px);
+      text-align: center;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.5rem;
+    }
+    button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      transition: opacity 0.15s ease-in-out;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    pre, #rendered {
+      width: 100%;
+      word-break: break-word;
+    }
+    pre {
+      background: #fff;
+      border: 1px dashed #cbd5e1;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      user-select: all;
+    }
+  </style>
+
+  <!-- MathJax configuration *before* the script loads -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+</head>
+<body>
+  <div id="wrapper">
+    <h1>LaTeX Generator</h1>
+    <input id="user-input" type="text" placeholder="Type text and press Enter" />
+    <button id="submit-btn">Submit</button>
+
+    <div id="rendered"></div>
+    <pre id="latex-code" title="Click to copy"></pre>
+  </div>
+
+  <script>
+    // 🔄 Replace with your real endpoint
+    const baseApiUrl = "https://api-6zbinsbuqq-uc.a.run.app";
+
+    async function compare_answer(answer, userInput) {
+      const response = await fetch(`${baseApiUrl}/make_question`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userInput })
+      });
+      const result = await response.json();
+      //console.log(result)
+      return result;
+    }
+
+    const inputEl = document.getElementById("user-input");
+    const btnEl = document.getElementById("submit-btn");
+    const renderedEl = document.getElementById("rendered");
+    const codeEl = document.getElementById("latex-code");
+
+    let lastLatex = "";
+
+    function renderLatex(latex) {
+      lastLatex = latex;
+      renderedEl.innerHTML = "$" + latex + "$";
+      if (window.MathJax?.typesetPromise) {
+        MathJax.typesetPromise([renderedEl]);
+      }
+      codeEl.textContent = latex;
+    }
+
+    async function handleSubmit() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      btnEl.disabled = true;
+      try {
+        const q = await compare_answer(text, text); // adjust as needed
+        renderLatex(q.response?.latex ?? "(no LaTeX returned)");
+      } catch (err) {
+        console.error(err);
+        alert("Error fetching LaTeX");
+      } finally {
+        btnEl.disabled = false;
+      }
+    }
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      }
+    });
+    btnEl.addEventListener("click", handleSubmit);
+
+    codeEl.addEventListener("click", async () => {
+      if (!lastLatex) return;
+      try {
+        await navigator.clipboard.writeText(lastLatex);
+        const original = codeEl.textContent;
+        codeEl.textContent = "Copied to clipboard!";
+        setTimeout(() => (codeEl.textContent = original), 1200);
+      } catch (err) {
+        alert("Clipboard write failed");
+      }
+    });
+  </script>
+</body>
+</html>
